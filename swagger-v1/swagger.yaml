@@ -1,0 +1,734 @@
+openapi: 3.0.0
+info:
+  title: Canonical Payment Processing API
+  description: |
+    A generic payment processing API that GoCart can integrate with.
+    If GoCart needs to integrate with a specific processing vendor,
+    it will forward the request to a server that implements this API contract.
+    That server will translate the request into a payload specific to the
+    gateway it integrates with, and execute the operation.
+
+    This API is expected to use basic authentication with credentials registered within GoCart.
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/GoCartPay/gocart-payment-processor-api/1.0.0
+  description: SwaggerHub API Auto Mocking
+security:
+- BasicAuth: []
+tags:
+- name: Payments
+  description: Process payment events.
+paths:
+  /payments/sale:
+    post:
+      tags:
+      - Payments
+      summary: Performs a new sale request transaction
+      description: "This service is expected to submit a purchase request to the processor.\
+        \ Depending on the processor, this request will likely be considered a \"\
+        purchase\" or a \"sale\"."
+      operationId: submitPaymentRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentSubmitRequest'
+      responses:
+        "200":
+          description: The service completed its work successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalePaymentResponseSuccess'
+        "207":
+          description: "The service was called successfully, but an error response\
+            \ was received \nfrom the underlying gateway/processor. That status should\
+            \ be provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalePaymentResponseFailure'
+        default:
+          description: |
+            Standard error response codes are returned by this service method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionResponse'
+  /payments/capture:
+    post:
+      tags:
+      - Payments
+      summary: Performs a new capture request transaction
+      description: This service is expected to transfer previously authorized funds.
+        This will be used after an authorization request to transfer funds.
+      operationId: capturePaymentRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        "200":
+          description: The service completed its work successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseSuccess'
+        "207":
+          description: "The service was called successfully, but an error response\
+            \ was received \nfrom the underlying gateway/processor. That status should\
+            \ be provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseFailure'
+        default:
+          description: |
+            Standard error response codes are returned by this service method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionResponse'
+  /payments/refund:
+    post:
+      tags:
+      - Payments
+      summary: Perform a new refund transaction
+      description: This service is expected to return funds to the payer of a previously
+        submitted and settled sale or capture transaction.
+      operationId: refundPaymentRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        "200":
+          description: The service completed its work successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseSuccess'
+        "207":
+          description: "The service was called successfully, but an error response\
+            \ was received \nfrom the underlying gateway/processor. That status should\
+            \ be provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseFailure'
+        default:
+          description: |
+            Standard error response codes are returned by this service method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionResponse'
+  /payments/void:
+    post:
+      tags:
+      - Payments
+      summary: Performs a new void transaction
+      description: "This service is expected to cancel a previously submitted, but\
+        \ not settled, sale transaction."
+      operationId: voidPaymentRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        "200":
+          description: The service completed its work successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseSuccess'
+        "207":
+          description: "The service was called successfully, but an error response\
+            \ was received \nfrom the underlying gateway/processor. That status should\
+            \ be provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseFailure'
+        default:
+          description: |
+            Standard error response codes are returned by this service method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionResponse'
+  /payments/authorize:
+    post:
+      tags:
+      - Payments
+      summary: Perform a new pre-authorization transaction
+      description: This service is expected to perform a pre-authorization transaction
+        to the processor. This will be used to verify funds to later perform a capture
+        request. This may also be used to confirm payment information.
+      operationId: authorizePaymentRequest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationRequest'
+      responses:
+        "200":
+          description: The service completed its work successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseSuccess'
+        "207":
+          description: "The service was called successfully, but an error response\
+            \ was received \nfrom the underlying gateway/processor. That status should\
+            \ be provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseFailure'
+        default:
+          description: |
+            Standard error response codes are returned by this service method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionResponse'
+components:
+  schemas:
+    Address:
+      required:
+      - addressLine1
+      - country
+      - countryCode
+      - postalCode
+      type: object
+      properties:
+        country:
+          type: string
+          example: United States of America
+        countryCode:
+          type: string
+          description: Two character country code (compliant with ISO 3166)
+          example: US
+        province:
+          type: string
+          description: Two character state code (compliant with ISO 3166)
+          example: CO
+        county:
+          type: string
+          example: Denver
+        city:
+          type: string
+          example: Denver
+        suburb:
+          type: string
+          example: Metro
+        district:
+          type: string
+          example: Denver
+        company:
+          type: string
+          example: CompanyA
+        addressLine1:
+          type: string
+          example: 123 Main Street
+        addressLine2:
+          type: string
+          example: Suite 303
+        addressLine3:
+          type: string
+          example: Room 7
+        postalCode:
+          type: string
+          description: Postal code (compliant with ISO 9001)
+          example: "80234"
+        postalCodeExtension:
+          type: string
+          example: "1111"
+    AmountDetails:
+      required:
+      - currencyCode
+      - total
+      type: object
+      properties:
+        currencyCode:
+          type: string
+          example: USD
+        total:
+          type: integer
+          description: "The total amount being paid, in cents."
+          example: 40000
+        tax:
+          type: integer
+          description: The amount of taxes being paid in cents.
+          example: 321
+        tip:
+          type: integer
+          description: "The tip amount, in cents."
+          example: 300
+        shipping:
+          type: integer
+          description: "The amount charged for shipping, in cents."
+          example: 7000
+        discount:
+          type: integer
+          description: "Any discounts applied to the purchase, in cents."
+        pointsTotal:
+          type: integer
+          description: "The value of the purchase made with points, in cents."
+          example: 9000
+    CreditCardDetails:
+      required:
+      - billingAddress
+      - expirationMonth
+      - expirationYear
+      type: object
+      properties:
+        creditCardNumber:
+          type: string
+          example: "1111222233334444"
+        creditCardToken:
+          type: string
+          example: 68b329da9893e34099c7d8ad5cb9c940
+        billingAddress:
+          $ref: '#/components/schemas/Address'
+        cvv:
+          type: string
+          example: "123"
+        expirationMonth:
+          type: string
+          example: "12"
+        expirationYear:
+          type: string
+          description: The 4-digit expiration year.
+          example: "2034"
+      description: "Information about the credit card being used. A request should\
+        \ include\neither the creditCardNumber or creditCardToken, but not both. \n"
+    DeviceInformation:
+      required:
+      - ipAddress
+      type: object
+      properties:
+        ipAddress:
+          type: string
+          example: 127.0.0.1
+        browserEmailAddress:
+          type: string
+          example: test@example.com
+        acceptHeader:
+          type: string
+          example: text/html
+        userAgent:
+          type: string
+          example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
+        browserLanguage:
+          type: string
+          example: en_us
+        javaEnabled:
+          type: boolean
+          example: false
+        javaScriptEnabled:
+          type: boolean
+          example: true
+        colorDepth:
+          type: integer
+          example: 8
+        screenHeight:
+          type: integer
+          example: 1080
+        screenWidth:
+          type: integer
+          example: 1920
+        browserTimeDifference:
+          type: string
+          example: -06:00
+    CustomerDetails:
+      required:
+      - customerId
+      - deviceInformation
+      - emailAddress
+      - sessionId
+      type: object
+      properties:
+        emailAddress:
+          type: string
+          example: test@example.com
+        phoneNumber:
+          type: string
+          example: +15555555555
+        customerId:
+          type: string
+          description: GoCart's unique identifier for the customer transacting
+          example: 7091b2bf-55d0-4d9a-a3a9-beb18d16471e
+        sessionId:
+          type: string
+          description: new description -GoCart's unique identifier for the checkout
+            session. previous description -Id that is unique per page view.
+          example: 3166434D7DA548CA804FD44D6E9BA11F
+        deviceInformation:
+          $ref: '#/components/schemas/DeviceInformation'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+    LineItem:
+      required:
+      - description
+      - name
+      - price
+      - quantity
+      - sku
+      type: object
+      properties:
+        sku:
+          type: string
+          description: The merchant's SKU for this line item
+          example: LF3311
+        name:
+          type: string
+          description: Name of the line item in the merchant's system.
+          example: Leather Sofa
+        description:
+          type: string
+          description: The description of the item on the merchants's page
+          example: A comfy seat.
+        quantity:
+          type: integer
+          description: The number of this line item included in the purchase.
+          example: 1
+        price:
+          type: integer
+          description: "The price of the item, in cents."
+          example: 39999
+    PaymentMethodDetails:
+      required:
+      - ownerFirstName
+      - ownerLastName
+      - paymentMethodType
+      type: object
+      properties:
+        paymentMethodType:
+          type: string
+          example: CreditCard
+        ownerFirstName:
+          type: string
+          example: Johnny
+        ownerLastName:
+          type: string
+          example: Test
+        creditCardDetails:
+          $ref: '#/components/schemas/CreditCardDetails'
+    PaymentRequest:
+      required:
+      - amountDetails
+      - gatewayTransactionId
+      - merchantId
+      - merchantOrderId
+      - networkTransactionId
+      - orderId
+      - paymentMethodDetails
+      - processorMerchantCode
+      type: object
+      properties:
+        merchantOrderId:
+          $ref: '#/components/schemas/MerchantOrderId'
+        processorMerchantCode:
+          $ref: '#/components/schemas/ProcessorMerchantCode'
+        orderId:
+          type: string
+          description: GoCart's order ID
+          example: 8f2f09bd-6474-45ef-aaee-35669c71af06
+        gatewayTransactionId:
+          type: string
+          description: |
+            The underlying processor's transaction ID. Used to identify the target
+            for this payment operation.
+          example: "146500180"
+        networkTransactionId:
+          type: string
+          description: A random id for tracking the network request
+          example: e07ddbf1-4c1f-427a-9cda-598798184e13
+        paymentMethodDetails:
+          $ref: '#/components/schemas/PaymentMethodDetails'
+        amountDetails:
+          $ref: '#/components/schemas/AmountDetails'
+    PaymentSubmitRequest:
+      required:
+      - amountDetails
+      - customerDetails
+      - goCartTransactionId
+      - goCartTransactionNumber
+      - merchantId
+      - merchantOrderId
+      - paymentMethodDetails
+      - processorMerchantCode
+      type: object
+      properties:
+        merchantOrderId:
+          $ref: '#/components/schemas/MerchantOrderId'
+        processorMerchantCode:
+          $ref: '#/components/schemas/ProcessorMerchantCode'
+        goCartTransactionId:
+          type: string
+          description: "This is the gateway transaction identifier. Depending on the\
+            \ processor, this may be used alone or in conjuction with GoCartTransactionNumber."
+          example: GC12345678900
+        goCartTransactionNumber:
+          type: integer
+          description: "This is the gateway transaction identifier. Depending on the\
+            \ processor, this may be used alone or in conjuction with GoCartTransactionId."
+          example: 12
+        orderDescription:
+          type: string
+          description: A description of the order.
+          example: Some new furniture.
+        customerDetails:
+          $ref: '#/components/schemas/CustomerDetails'
+        lineItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineItem'
+        paymentMethodDetails:
+          $ref: '#/components/schemas/PaymentMethodDetails'
+        amountDetails:
+          $ref: '#/components/schemas/AmountDetails'
+    VerificationRequest:
+      type: object
+      properties:
+        customerDetails:
+          $ref: '#/components/schemas/CustomerDetails'
+    BasePaymentResponse:
+      required:
+      - merchantId
+      - merchantOrderId
+      type: object
+      properties:
+        merchantOrderId:
+          $ref: '#/components/schemas/MerchantOrderId'
+        processorMerchantCode:
+          $ref: '#/components/schemas/ProcessorMerchantCode'
+    SalePaymentResponseSuccess:
+      properties:
+        status:
+          type: string
+          example: Approved
+        success:
+          type: boolean
+          example: true
+        error:
+          $ref: '#/components/schemas/EmptyErrorDetails'
+        networkTransactionId:
+          type: string
+          description: Random ID corresponding to this network transaction.
+          example: 0fc6911b-e633-404b-a009-db6ca287e8e0
+        gatewayTransactionid:
+          type: string
+          description: |
+            Transaction ID from the processor.
+            Used to identify the target transaction for a given operation.
+          example: "146500180"
+        pointsReservationId:
+          type: string
+          example: 4c5ffc5c-ab39-4658-9ffd-d773898e3f6e
+        authorizedAmount:
+          type: integer
+          example: 45000
+        avsResponse:
+          $ref: '#/components/schemas/AVSResponse'
+        cvvResponse:
+          $ref: '#/components/schemas/CVVResponse'
+      allOf:
+      - $ref: '#/components/schemas/BasePaymentResponse'
+      - required:
+        - status
+        - success
+        type: object
+    SalePaymentResponseFailure:
+      properties:
+        status:
+          type: string
+          example: Failure
+        success:
+          type: boolean
+          example: false
+        error:
+          $ref: '#/components/schemas/ErrorDetails'
+        networkTransactionId:
+          type: string
+          description: Random ID corresponding to this network transaction.
+          example: 0fc6911b-e633-404b-a009-db6ca287e8e0
+        gatewayTransactionid:
+          type: string
+          description: |
+            Transaction ID from the processor.
+            Used to identify the target transaction for a given operation.
+          example: "146500180"
+        pointsReservationId:
+          type: string
+          example: 4c5ffc5c-ab39-4658-9ffd-d773898e3f6e
+        authorizedAmount:
+          type: integer
+          example: 45000
+        avsResponse:
+          $ref: '#/components/schemas/AVSResponse'
+        cvvResponse:
+          $ref: '#/components/schemas/CVVResponse'
+      allOf:
+      - $ref: '#/components/schemas/BasePaymentResponse'
+      - required:
+        - status
+        - success
+        type: object
+    PaymentResponseSuccess:
+      properties:
+        status:
+          type: string
+          example: Approved
+        success:
+          type: boolean
+          example: true
+        error:
+          $ref: '#/components/schemas/EmptyErrorDetails'
+        networkTransactionId:
+          type: string
+          description: Random ID corresponding to this network transaction.
+          example: 0fc6911b-e633-404b-a009-db6ca287e8e0
+        gatewayTransactionid:
+          type: string
+          description: |
+            Transaction ID from the processor.
+            Used to identify the target transaction for a given operation.
+          example: "146500180"
+        pointsReservationId:
+          type: string
+          example: 4c5ffc5c-ab39-4658-9ffd-d773898e3f6e
+        authorizedAmount:
+          type: integer
+          example: 45000
+      allOf:
+      - $ref: '#/components/schemas/BasePaymentResponse'
+      - required:
+        - status
+        - success
+        type: object
+    PaymentResponseFailure:
+      properties:
+        status:
+          type: string
+          example: Failure
+        success:
+          type: boolean
+          example: false
+        error:
+          $ref: '#/components/schemas/ErrorDetails'
+        networkTransactionId:
+          type: string
+          description: Random ID corresponding to this network transaction.
+          example: 0fc6911b-e633-404b-a009-db6ca287e8e0
+        gatewayTransactionid:
+          type: string
+          description: |
+            Transaction ID from the processor.
+            Used to identify the target transaction for a given operation.
+          example: "146500180"
+        pointsReservationId:
+          type: string
+          example: 4c5ffc5c-ab39-4658-9ffd-d773898e3f6e
+        authorizedAmount:
+          type: integer
+          example: 45000
+      allOf:
+      - $ref: '#/components/schemas/BasePaymentResponse'
+      - required:
+        - status
+        - success
+        type: object
+    AVSResponse:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          description: The result of processing AVS (if applicable).
+          example: OK
+    CVVResponse:
+      required:
+      - status
+      type: object
+      properties:
+        status:
+          type: string
+          description: The result after running CVV (if applicable).
+          example: OK
+    ErrorDetails:
+      required:
+      - errorCode
+      type: object
+      properties:
+        errorCode:
+          type: string
+          example: E0566
+        errorDescription:
+          type: string
+          example: Duplicate transaction
+    EmptyErrorDetails:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          example: ""
+        errorDescription:
+          type: string
+          example: ""
+    ProcessorMerchantCode:
+      type: string
+      description: The processor's unique identifier of the merchant.
+      example: "123456789"
+    MerchantOrderId:
+      type: string
+      description: This is the gateway's unique identifier to tell the merchant who
+        is transacting.
+      example: e1542fc2-a71b-4458-85c8-1cddffa99722
+    ExceptionResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+  responses:
+    OK:
+      description: The service completed its work successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PaymentResponseSuccess'
+    OKSale:
+      description: The service completed its work successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SalePaymentResponseSuccess'
+    MultiStatus:
+      description: "The service was called successfully, but an error response was\
+        \ received \nfrom the underlying gateway/processor. That status should be\
+        \ provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PaymentResponseFailure'
+    MultiStatusSale:
+      description: "The service was called successfully, but an error response was\
+        \ received \nfrom the underlying gateway/processor. That status should be\
+        \ provided in\nthe ErrorDetails section of the PaymentResponse.\n"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SalePaymentResponseFailure'
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
