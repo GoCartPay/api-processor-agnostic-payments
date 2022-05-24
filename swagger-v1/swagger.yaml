@@ -2,13 +2,9 @@ openapi: 3.0.0
 info:
   title: Canonical Payment Processing API
   description: |
-    A generic payment processing API that GoCart can integrate with.
-    If GoCart needs to integrate with a specific processing vendor,
-    it will forward the request to a server that implements this API contract.
-    That server will translate the request into a payload specific to the
-    gateway it integrates with, and execute the operation.
+    A generic payment processing API that any PCI compliant payment platform can integrate with. When a payment event takes place, the API will forward the request to a server that implements this API contract. The server will translate the request as needed for downstream payment processing and respond to the request in the generic response format.
 
-    This API is expected to use basic authentication with credentials registered within GoCart.
+    This API will basic authentication with credentials configured at a merchant level within GoCart.
   version: 1.0.0
 servers:
 - url: https://virtserver.swaggerhub.com/GoCartPay/gocart-payment-processor-api/1.0.0
@@ -24,9 +20,9 @@ paths:
       tags:
       - Payments
       summary: Performs a new sale request transaction
-      description: "This service is expected to submit a purchase request to the processor.\
-        \ Depending on the processor, this request will likely be considered a \"\
-        purchase\" or a \"sale\"."
+      description: This service submits a purchase request to the processor. These
+        requests should be considered “sale” or “authcap” meaning the funds should
+        be captured automatically if the payment is successfully authorized.
       operationId: submitPaymentRequest
       requestBody:
         content:
@@ -60,8 +56,9 @@ paths:
       tags:
       - Payments
       summary: Performs a new capture request transaction
-      description: This service is expected to transfer previously authorized funds.
-        This will be used after an authorization request to transfer funds.
+      description: This service is expected to perform a capture of previously authorized
+        funds. This will be used after a successful authorization to request transfer
+        of funds. Partial or full captures are both supported through this request.
       operationId: capturePaymentRequest
       requestBody:
         content:
@@ -95,8 +92,9 @@ paths:
       tags:
       - Payments
       summary: Perform a new refund transaction
-      description: This service is expected to return funds to the payer of a previously
-        submitted and settled sale or capture transaction.
+      description: This service is expected to perform a refund of previously submitted
+        and settled sale or capture transactions. Partial or full refunds are both
+        supported through this request.
       operationId: refundPaymentRequest
       requestBody:
         content:
@@ -165,9 +163,10 @@ paths:
       tags:
       - Payments
       summary: Perform a new pre-authorization transaction
-      description: This service is expected to perform a pre-authorization transaction
-        to the processor. This will be used to verify funds to later perform a capture
-        request. This may also be used to confirm payment information.
+      description: "This service is expected to perform an authorization transaction.\
+        \ These transactions will need to be captured via a capture request in order\
+        \ to complete a transfer of funds. This service may also be used to verify\
+        \ payment information, in which case the amount will be 0."
       operationId: authorizePaymentRequest
       requestBody:
         content:
