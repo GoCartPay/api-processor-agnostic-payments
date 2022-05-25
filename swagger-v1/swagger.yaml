@@ -129,7 +129,7 @@ paths:
       - Payments
       summary: Performs a new void transaction
       description: "This service is expected to cancel a previously submitted, but\
-        \ not settled, sale transaction."
+        \ not settled, sale transaction. This may be a full or partial void."
       operationId: voidPaymentRequest
       requestBody:
         content:
