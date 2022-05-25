@@ -90,7 +90,7 @@ paths:
   /payments/void:
     post:
       summary: Performs a new void transaction
-      description: This service is expected to cancel a previously submitted, but not settled, sale transaction.
+      description: This service is expected to cancel a previously submitted, but not settled, sale transaction. This may be a full or partial void.
       operationId: voidPaymentRequest
       tags:
         - Payments
