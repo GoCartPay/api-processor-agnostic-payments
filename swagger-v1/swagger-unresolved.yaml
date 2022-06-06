@@ -113,7 +113,7 @@ paths:
                 $ref: 'https://api.swaggerhub.com/domains/GoCartPay/gocart-core-domain/1.0.0#/components/schemas/ExceptionResponse'
   /payments/authorize:
     post:
-      summary: Perform a new pre-authorization transaction
+      summary: Perform a new authorization transaction
       description: This service is expected to perform an authorization transaction. These transactions will need to be captured via a capture request in order to complete a transfer of funds. This service may also be used to verify payment information, in which case the amount will be 0.
       operationId: authorizePaymentRequest
       tags:
@@ -122,12 +122,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerificationRequest'
+              $ref: '#/components/schemas/PaymentSubmitRequest'
       responses:
         '200':
-          $ref: '#/components/responses/OK'
+          $ref: '#/components/responses/OKSale'
         '207':
-          $ref: '#/components/responses/MultiStatus'
+          $ref: '#/components/responses/MultiStatusSale'
         default:
           description: |
             Standard error response codes are returned by this service method.
@@ -430,11 +430,6 @@ components:
           $ref: '#/components/schemas/PaymentMethodDetails'
         amountDetails:
           $ref: '#/components/schemas/AmountDetails'
-    VerificationRequest:
-      type: object
-      properties:
-        customerDetails:
-          $ref: '#/components/schemas/CustomerDetails'
     BasePaymentResponse:
       type: object
       required:
