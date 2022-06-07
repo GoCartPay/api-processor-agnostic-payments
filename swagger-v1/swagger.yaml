@@ -162,7 +162,7 @@ paths:
     post:
       tags:
       - Payments
-      summary: Perform a new pre-authorization transaction
+      summary: Perform a new authorization transaction
       description: "This service is expected to perform an authorization transaction.\
         \ These transactions will need to be captured via a capture request in order\
         \ to complete a transfer of funds. This service may also be used to verify\
@@ -172,14 +172,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VerificationRequest'
+              $ref: '#/components/schemas/PaymentSubmitRequest'
       responses:
         "200":
           description: The service completed its work successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentResponseSuccess'
+                $ref: '#/components/schemas/SalePaymentResponseSuccess'
         "207":
           description: "The service was called successfully, but an error response\
             \ was received \nfrom the underlying gateway/processor. That status should\
@@ -187,7 +187,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentResponseFailure'
+                $ref: '#/components/schemas/SalePaymentResponseFailure'
         default:
           description: |
             Standard error response codes are returned by this service method.
@@ -492,11 +492,6 @@ components:
           $ref: '#/components/schemas/PaymentMethodDetails'
         amountDetails:
           $ref: '#/components/schemas/AmountDetails'
-    VerificationRequest:
-      type: object
-      properties:
-        customerDetails:
-          $ref: '#/components/schemas/CustomerDetails'
     BasePaymentResponse:
       required:
       - merchantId
